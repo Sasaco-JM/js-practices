@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>非同期処理(JavaScript)課題</title>
+  </head>
+  <body>
+    <button onclick="showHtml();">コンソールへHTMLを表示</button>
+    <script>
+      async function showHtml() {
+          const response = await fetch('https://bootcamp.fjord.jp/');
+          const data = await response.text();
+          console.log(data);
+        };
+    </script>
+  </body>
+</html>
