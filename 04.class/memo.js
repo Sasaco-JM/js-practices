@@ -1,7 +1,9 @@
 const fs = require('fs')
 const Enquirer = require('enquirer')
-const Memo = require('./memoClass.js')
 const jsonObject = JSON.parse(fs.readFileSync('./memos.json', 'utf8'))
+const MemoJson = require('./memoJsonClass.js')
+
+const memoData = new MemoJson(jsonObject)
 
 switch (process.argv[2]) {
   case '-l':
@@ -20,22 +22,16 @@ switch (process.argv[2]) {
 // ==================関数群======================
 // ======登録機能======
 function addNewMemoToJson () {
-  const masterData = []
+  let masterData = []
 
   const input = fs.readFileSync('/dev/stdin', 'utf8')
   if (input === '') {
     console.log('メモ内容を入力してください。')
   } else {
-    jsonObject.MyMemo.forEach((obj) => {
-      const memo = {
-        id: obj.id,
-        content: obj.content
-      }
-      masterData.push(memo)
-    })
+    masterData = memoData.makeMasterData()
 
     const newMemo = {
-      id: calcNextId(jsonObject),
+      id: memoData.calcNextId(),
       content: input
     }
     masterData.push(newMemo)
@@ -45,19 +41,10 @@ function addNewMemoToJson () {
   }
 }
 
-// jsonファイルに存在するメモIDの最大値に+1した値を返却
-function calcNextId (jsonObject) {
-  const idList = jsonObject.MyMemo.map((obj) => obj.id)
-  const maxId = Math.max(...idList)
-
-  return maxId + 1
-}
-
 // ======一覧機能======
 // メモタイトルのリスト作成
 function showMemoTitles () {
-  const memos = []
-  readMemos(jsonObject, memos)
+  const memos = memoData.readMemos()
 
   memos.forEach((memo) => {
     console.log(memo.showTitle())
@@ -67,11 +54,8 @@ function showMemoTitles () {
 // ======参照機能======
 // ターミナルにメモタイトル一覧を表示、メモタイトル選択後に内容を表示
 async function showMemoDetail () {
-  const memos = []
-  const choices = []
-
-  readMemos(jsonObject, memos)
-  makeChoices(memos, choices)
+  const memos = memoData.readMemos()
+  const choices = makeChoices(memos)
 
   const question = {
     type: 'select',
@@ -89,30 +73,16 @@ async function showMemoDetail () {
   })
 }
 
-// json内のメモを全てメモオブジェクトとして取得
-function readMemos (jsonObject, memos) {
-  jsonObject.MyMemo.forEach((obj) => {
-    const memo = new Memo(obj.id, obj.content)
-    memos.push(memo)
-  })
-}
-
 // メモ選択肢リストを作成
-function makeChoices (memos, choices) {
-  memos.forEach((memo) => {
-    const data = { name: memo.id, message: memo.showTitle() }
-    choices.push(data)
-  })
+function makeChoices (memos) {
+  return memos.map(memo => ({ name: memo.id, message: memo.showTitle() }))
 }
 
 // ======削除機能======
 // ターミナルにメモタイトル一覧を表示、メモタイトル選択後に対象のメモを削除
 async function deleteMemo () {
-  const memos = []
-  const choices = []
-  const masterData = []
-  readMemos(jsonObject, memos)
-  makeChoices(memos, choices)
+  const memos = memoData.readMemos()
+  const choices = makeChoices(memos)
 
   const question = {
     type: 'select',
@@ -122,15 +92,7 @@ async function deleteMemo () {
   }
   const answer = await Enquirer.prompt(question)
 
-  jsonObject.MyMemo.forEach((obj) => {
-    if (obj.id !== answer.value) {
-      const data = {
-        id: obj.id,
-        content: obj.content
-      }
-      masterData.push(data)
-    }
-  })
+  const masterData = memoData.makeMasterDataAfterDelete(answer.value)
 
   const newMasterData = JSON.stringify({ MyMemo: masterData }, null, ' ')
   fs.writeFileSync('memos.json', newMasterData)
