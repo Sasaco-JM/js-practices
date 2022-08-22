@@ -3,10 +3,7 @@ const Memo = require('./memo.js')
 module.exports = class MemoJson {
   constructor (json) {
     this.json = json
-  }
-
-  makeMasterData () {
-    return this.json.MyMemo.map(({ id, content }) => ({ id, content }))
+    this.master = this.json.MyMemo.map(({ id, content }) => ({ id, content }))
   }
 
   // jsonファイルに存在するメモIDの最大値に+1した値を返却
@@ -22,7 +19,7 @@ module.exports = class MemoJson {
     return this.json.MyMemo.map(memo => new Memo(memo.id, memo.content))
   }
 
-  makeMasterDataAfterDelete (id) {
+  deleteMemo (id) {
     return this.json.MyMemo.filter(memo => memo.id !== id)
   }
 }
